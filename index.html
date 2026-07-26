@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schoolbook - 우리반 디지털 학급 보물창고 & 미술관</title>
+    
+    <!-- 구글 폰트: 고운돋움(Gowun Dodum) & 해바라기(Sunflower) & 개구(Gaegu) 적용 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&family=Sunflower:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS 스타일 -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Firebase v9/v10 Compat SDK (Auth & Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <!-- 화사한 가운데 정렬 파스텔 HEADER -->
+    <header class="app-header">
+        <div class="brand-area" onclick="app.switchTab('feed')">
+            <div class="brand-logo">📖</div>
+            <div class="brand-title">Schoolbook <span>Classroom</span></div>
+        </div>
+
+        <!-- 메인 네비게이션 메뉴 탭 카테고리 그룹 -->
+        <nav class="main-nav-tabs">
+            <button class="nav-tab-btn active" id="tabBtnFeed" onclick="app.switchTab('feed')">🏠 학급 상시 피드</button>
+            <button class="nav-tab-btn" id="tabBtnExhibition" onclick="app.switchTab('exhibition')">🏛️ 대표 미술관</button>
+            <button class="nav-tab-btn" id="tabBtnFarm" onclick="app.switchTab('farm')">🌾 우리반 캐릭터 농장</button>
+        </nav>
+
+        <div id="headerUserArea" class="user-action-group">
+            <!-- JS 동적 렌더링 -->
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 영역 (가운데 정렬) -->
+    <main id="mainContentArea">
+        <!-- JS 동적 렌더링 -->
+    </main>
+
+    <!-- ==================== Firebase 구글 / 익명 로그인 모달 ==================== -->
+    <div class="modal-overlay" id="loginModal" style="display: none;">
+        <div class="modal-card" style="max-width: 580px;">
+            <h2 style="font-family: 'Gaegu', cursive; font-size: 2.6rem; color: var(--primary-color); text-align: center; margin-bottom: 10px;">🔑 Schoolbook 로그인</h2>
+            <p style="text-align: center; color: var(--text-muted); font-size: 1.2rem; margin-bottom: 24px;">
+                Firebase Google 로그인, 익명 로그인 또는 이메일 접속을 통해 나만의 기록을 누적하세요!
+            </p>
+
+            <div style="background: var(--pastel-blue); padding: 1.8rem; border-radius: 24px; border: 1px solid #bbdefb; margin-bottom: 20px;">
+                <h4 style="color: var(--primary-color); margin-bottom: 14px; font-size: 1.3rem;">🌐 Google 계정 또는 익명 로그인</h4>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button onclick="authManager.loginWithFirebaseGoogle()" 
+                            style="padding: 14px; border-radius: 16px; border: none; background: linear-gradient(135deg, #4285f4, #34a853); color: #fff; font-weight: 800; cursor: pointer; font-size: 1.3rem;">
+                        🔥 Firebase / Google 계정 팝업 로그인
+                    </button>
+                    <button onclick="authManager.loginAnonymously()" 
+                            style="padding: 12px; border-radius: 16px; border: 1.5px solid #4a90e2; background: #ffffff; color: #4a90e2; font-weight: 800; cursor: pointer; font-size: 1.2rem;">
+                        👤 익명 (게스트) 원클릭 로그인
+                    </button>
+                </div>
+            </div>
+
+            <!-- 간편 직접 입력 구역 (하드코딩 이메일 제거) -->
+            <div style="background: #fafafa; padding: 1.2rem; border-radius: 20px; border: 1px solid #eee; margin-bottom: 20px;">
+                <p style="font-size: 1.1rem; color: #666; margin-bottom: 10px; font-weight: 800;">직접 계정 정보 입력 접속:</p>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" id="directGoogleName" placeholder="성함/이름 입력" value="" style="flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #ccc;" />
+                    <input type="email" id="directGoogleEmail" placeholder="구글 이메일 주소 입력" value="" style="flex: 1.5; padding: 10px; border-radius: 12px; border: 1px solid #ccc;" />
+                    <button onclick="authManager.loginWithGoogleAccount(document.getElementById('directGoogleName').value, document.getElementById('directGoogleEmail').value)" 
+                            style="padding: 10px 20px; border-radius: 12px; border: none; background: #2c3e50; color: #fff; font-weight: 800; font-size: 1.2rem; cursor: pointer;">접속</button>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed #ddd; padding-top: 20px; text-align: center;">
+                <p style="color: var(--text-muted); margin-bottom: 14px; font-size: 1.1rem; font-weight: 800;">역할별 전용 접속 그룹:</p>
+                <div class="button-category-cluster">
+                    <button onclick="app.openCreateClassModal('선생님', '')" style="padding: 12px 22px; border-radius: 15px; border: none; background: #2ecc71; color: #fff; font-weight: 800; font-size: 1.2rem; cursor: pointer;">👩‍🏫 교사 학급 개설</button>
+                    <button onclick="app.openJoinCodeModal('학생', '')" style="padding: 12px 22px; border-radius: 15px; border: none; background: #fecb2e; color: #5d4037; font-weight: 800; font-size: 1.2rem; cursor: pointer;">🎒 학생 코드입력</button>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 24px;">
+                <button onclick="app.closeLoginModal()" style="padding: 10px 24px; border-radius: 20px; border: 1px solid #ccc; background: transparent; color: #666; font-size: 1.2rem; cursor: pointer;">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 👩‍🏫 교사 학급 개설 모달 ==================== -->
+    <div class="modal-overlay" id="createClassModal" style="display: none;">
+        <div class="modal-card">
+            <h2 style="font-family: 'Gaegu', cursive; font-size: 2.6rem; color: #2ecc71; text-align: center; margin-bottom: 18px;">👩‍🏫 Schoolbook 학급 개설</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">선생님 성함</label>
+                    <input type="text" id="teacherNameInput" placeholder="예: 김선생님" />
+                </div>
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">구글 이메일 주소</label>
+                    <input type="email" id="teacherEmailInput" placeholder="teacher@gmail.com" />
+                </div>
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">학급 명칭</label>
+                    <input type="text" id="classNameInput" placeholder="예: 2026학년도 5학년 2반" />
+                </div>
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">학급 급훈 / 슬로건</label>
+                    <input type="text" id="classThemeInput" placeholder="예: 🎨 꿈꾸는 우리들의 행복한 학급 이야기" />
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 14px;">
+                    <button onclick="app.closeCreateClassModal()" style="padding: 12px 24px; border-radius: 16px; border: 1px solid #ccc; background: transparent; color: #666; font-size: 1.2rem; cursor: pointer;">취소</button>
+                    <button onclick="app.submitCreateClass()" style="padding: 12px 28px; border-radius: 16px; border: none; background: #2ecc71; color: #fff; font-weight: 800; font-size: 1.3rem; cursor: pointer;">✨ 개설하고 6자리 코드 생성!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 🎒 학생 6자리 학급 코드 입력 가입 모달 ==================== -->
+    <div class="modal-overlay" id="joinCodeModal" style="display: none;">
+        <div class="modal-card">
+            <h2 style="font-family: 'Gaegu', cursive; font-size: 2.6rem; color: var(--primary-color); text-align: center; margin-bottom: 18px;">🔑 6자리 학급 코드로 입장하기</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">6자리 학급 입장 코드</label>
+                    <input type="text" id="joinCodeInput" placeholder="선생님께 받은 코드 입력 (예: CLASS-7A8B)" style="font-size: 1.5rem; font-weight: 800; letter-spacing: 2px; color: var(--primary-color); text-align: center;" />
+                </div>
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">학생 이름</label>
+                    <input type="text" id="studentNameInput" placeholder="예: 김꿈돌" />
+                </div>
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">구글 이메일 주소</label>
+                    <input type="email" id="studentEmailInput" placeholder="student@gmail.com" />
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 14px;">
+                    <button onclick="app.closeJoinCodeModal()" style="padding: 12px 24px; border-radius: 16px; border: 1px solid #ccc; background: transparent; color: #666; font-size: 1.2rem; cursor: pointer;">취소</button>
+                    <button onclick="app.submitJoinCode()" style="padding: 12px 28px; border-radius: 16px; border: none; background: var(--primary-color); color: #fff; font-weight: 800; font-size: 1.3rem; cursor: pointer;">🚀 학급 입장 및 내 방 생성</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 📱 패드/사진첩 파일 업로드 지원 새 기록 작성 모달 ==================== -->
+    <div class="modal-overlay" id="postModal" style="display: none;">
+        <div class="modal-card" style="max-width: 660px;">
+            <h2 style="font-family: 'Gaegu', cursive; font-size: 2.6rem; color: var(--primary-color); margin-bottom: 18px;">✨ 나만의 새 기록 올리기 (+EXP)</h2>
+            
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">📌 제목</label>
+                    <input type="text" id="postTitleInput" placeholder="작품이나 기록의 제목을 적어주세요..." />
+                </div>
+
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">📂 카테고리 선택</label>
+                    <select id="postCategorySelect">
+                        <!-- 동적 생성 -->
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">🎨 기록 유형 선택</label>
+                    <div style="display: flex; justify-content: center; gap: 20px; font-size: 1.3rem;">
+                        <label><input type="radio" name="postType" value="image" checked onclick="document.getElementById('imgOptionsSection').style.display='block'; document.getElementById('videoSection').style.display='none'; document.getElementById('textSection').style.display='none';" /> 🎨 사진/그림</label>
+                        <label><input type="radio" name="postType" value="text" onclick="document.getElementById('imgOptionsSection').style.display='none'; document.getElementById('videoSection').style.display='none'; document.getElementById('textSection').style.display='block';" /> 📝 시/글짓기</label>
+                        <label><input type="radio" name="postType" value="video" onclick="document.getElementById('imgOptionsSection').style.display='none'; document.getElementById('videoSection').style.display='block'; document.getElementById('textSection').style.display='none';" /> 🎬 영상 업로드</label>
+                    </div>
+                </div>
+
+                <!-- 그림/사진 옵션 -->
+                <div id="imgOptionsSection">
+                    <div style="margin-bottom: 12px; font-size: 1.2rem;">
+                        <label><input type="radio" name="imgOption" value="upload" checked onclick="document.getElementById('fileUploadArea').style.display='block'; document.getElementById('canvasArea').style.display='none'; document.getElementById('urlArea').style.display='none';" /> 📷 사진첩 업로드 (추천)</label>
+                        <label><input type="radio" name="imgOption" value="draw" onclick="document.getElementById('fileUploadArea').style.display='none'; document.getElementById('canvasArea').style.display='block'; document.getElementById('urlArea').style.display='none';" /> 🖌️ 직접 그림 그리기</label>
+                        <label><input type="radio" name="imgOption" value="url" onclick="document.getElementById('fileUploadArea').style.display='none'; document.getElementById('canvasArea').style.display='none'; document.getElementById('urlArea').style.display='block';" /> 🖼️ 주소 입력</label>
+                    </div>
+
+                    <div id="fileUploadArea" class="file-upload-zone">
+                        <input type="file" id="postFileInput" accept="image/*,video/*" onchange="app.handleFileSelect(event)" style="display: none;" />
+                        <div class="upload-drop-box" onclick="document.getElementById('postFileInput').click()">
+                            <span class="upload-icon">📷</span>
+                            <p class="upload-title">여기를 터치하여 <b>태블릿/패드 사진첩에서 사진 선택</b></p>
+                            <span class="upload-sub">이미지/동영상 파일을 선택하세요</span>
+                        </div>
+                        <div id="filePreviewContainer" class="file-preview-box" style="display: none;">
+                            <!-- 선택한 파일 미리보기 -->
+                        </div>
+                    </div>
+                    
+                    <div id="canvasArea" class="canvas-wrapper" style="display: none;">
+                        <canvas id="drawingCanvas" width="480" height="240"></canvas>
+                        <div class="canvas-tools">
+                            <input type="color" id="penColor" value="#000000" onchange="canvasPainter.setColor(this.value)" title="색상 선택" />
+                            <button onclick="canvasPainter.setLineWidth(3)">얇게</button>
+                            <button onclick="canvasPainter.setLineWidth(8)">두껍게</button>
+                            <button onclick="canvasPainter.setColor('#ffffff')">지우개</button>
+                            <button onclick="canvasPainter.clearCanvas()" style="background: #ff7675; color: #fff; border: none; border-radius: 6px;">전체 지우기</button>
+                        </div>
+                    </div>
+
+                    <div id="urlArea" style="display: none;">
+                        <input type="text" id="postImageUrlInput" placeholder="이미지 URL 주소를 입력해주세요..." />
+                    </div>
+                </div>
+
+                <!-- 글 전용 옵션 -->
+                <div id="textSection" style="display: none;">
+                    <textarea id="postTextInput" rows="6" placeholder="자작 시나 일기, 관찰 글의 내용을 작성해보세요..."></textarea>
+                </div>
+
+                <!-- 영상 전용 옵션 -->
+                <div id="videoSection" style="display: none;">
+                    <div style="margin-bottom: 8px;">
+                        <input type="file" id="postVideoFileInput" accept="video/*" onchange="app.handleVideoFileSelect(event)" style="display: none;" />
+                        <button type="button" onclick="document.getElementById('postVideoFileInput').click()" style="width: 100%; padding: 14px; background: #eef5fc; border: 2px dashed #3498db; color: #2980b9; border-radius: 14px; font-weight: 800; font-size: 1.3rem; cursor: pointer; margin-bottom: 8px;">
+                            📱 패드 앨범에서 동영상 파일 업로드하기
+                        </button>
+                        <div id="videoPreviewBox" style="display: none; text-align: center; margin-bottom: 8px;"></div>
+                    </div>
+                    <input type="text" id="postVideoUrlInput" placeholder="또는 유튜브 Embed URL 주소를 입력하세요 (예: https://www.youtube.com/embed/...)" />
+                </div>
+
+                <div>
+                    <label style="font-weight: 800; display: block; margin-bottom: 6px;">💬 한 줄 소감 및 설명</label>
+                    <input type="text" id="postDescInput" placeholder="이 작품이나 글에 대한 짧은 소개를 적어주세요..." />
+                </div>
+
+                <div style="display: flex; justify-content: center; gap: 12px; margin-top: 14px;">
+                    <button onclick="app.closePostModal()" style="padding: 12px 24px; border-radius: 16px; border: 1px solid #ccc; background: transparent; color: #666; font-size: 1.2rem; cursor: pointer;">취소</button>
+                    <button onclick="app.submitNewPost()" style="padding: 12px 32px; border-radius: 16px; border: none; background: var(--primary-color); color: #fff; font-weight: 800; font-size: 1.4rem; cursor: pointer;">✨ 올리고 레벨업!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS 스크립트 연결 -->
+    <script src="js/config.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/character.js"></script>
+    <script src="js/flipbook.js"></script>
+    <script src="js/gallery.js"></script>
+    <script src="js/comments.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
